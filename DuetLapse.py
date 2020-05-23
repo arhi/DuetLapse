@@ -204,22 +204,30 @@ def unPause():
         print('Requesting un pause via M24')
         printer.gCode('M24')
 
-def onePhoto():
+def onePhoto(zl):
     global frame
     frame += 1
     s="{0:08d}".format(int(np.around(frame)))
-    fn = '/tmp/DuetLapse/IMG'+s+'.jpeg'
+    if (zl > -1):
+      zlayer="{0:8d}".format(int(zl))
+      anotationUSB = '--title "Layer '+zlayer+'"  '
+      anotationRPI = '-a 12 -a "Layer '+zlayer+'"  '
+    else:
+      anotationUSB = ''
+      anotationRPI = ''
+
+    fn = ' /tmp/DuetLapse/IMG'+s+'.jpeg'
 
     if ('usb' in camera): 
         if (camparms == ''):
-            cmd = 'fswebcam --quiet --no-banner '+fn
+            cmd = 'fswebcam --quiet --no-banner ' + anotationUSB + fn
         else:
-            cmd = 'fswebcam '+camparms+' '+fn
+            cmd = 'fswebcam '+camparms+' ' + anotationUSB + fn
     if ('pi' in camera): 
         if (camparms == ''):
-            cmd = 'raspistill -t 1 -ex sports -mm matrix -n -o '+fn
+            cmd = 'raspistill -t 1 -ex sports -mm matrix -n -o ' + fn + anotationRPI
         else:
-            cmd = 'raspistill  '+camparms+' -o '+fn
+            cmd = 'raspistill  '+camparms+' -o ' + fn + anotationRPI
     if ('web' in camera): 
         if (camparms == ''):
             cmd = 'wget --auth-no-challenge -nv -O '+fn+' "'+weburl+'" '
@@ -241,7 +249,7 @@ def oneInterval():
             # Layer changed, take a picture.
             checkForcePause()
             print('Capturing frame {0:5d} at X{1:4.2f} Y{2:4.2f} Z{3:4.2f} Layer {4:d}'.format(int(np.around(frame)),printer.getCoords()['X'],printer.getCoords()['Y'],printer.getCoords()['Z'],zn))
-            onePhoto()
+            onePhoto(zn)
         zo = zn
     global timePriorPhoto
     elap = (time.time() - timePriorPhoto)
@@ -249,12 +257,12 @@ def oneInterval():
     if ((seconds) and (seconds < elap)):
         checkForcePause()
         print('Capturing frame {0:5d} after {1:4.2f} seconds elapsed.'.format(int(np.around(frame)),elap))
-        onePhoto()
+        onePhoto(-1)
 
     if (('pause' in detect) and ('paused' in printer.getStatus()) and not alreadyPaused):
             alreadyPaused = True
             print('Pause Detected, capturing frame {0:5d}'.format(int(np.around(frame)),elap))
-            onePhoto()
+            onePhoto(-1)
             unPause()   
 
     if (alreadyPaused and (not 'paused' in printer.getStatus()) ):
