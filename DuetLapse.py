@@ -305,7 +305,7 @@ def postProcess():
     print("Now making {0:d} frames into a video at 10 frames per second.".format(int(np.around(frame))))
     if (250 < frame): print("This can take a while...")
     if (two == 'yes'):
-      fn  ='~/DuetLapse'+time.strftime('%m%d%y%H%M',time.localtime())+'.mkv'    
+      fn  ='~/DuetLapseDUAL'+time.strftime('%m%d%y%H%M',time.localtime())+'.mkv'    
       fna ='~/DuetLapseA'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
       fnb ='~/DuetLapseB'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
       if (vidparms == ''):
