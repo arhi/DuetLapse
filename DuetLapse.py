@@ -56,6 +56,9 @@ def init():
     parser.add_argument('-pause',type=str,nargs=1,choices= ['yes', 'no'],default=['no'])
     parser.add_argument('-movehead',type=float,nargs=2,default=[0.0,0.0])
     parser.add_argument('-weburl',type=str,nargs=1,default=[''])
+    parser.add_argument('-two',type=str,nargs=1,choices= ['yes', 'no'],default=['no'])
+    parser.add_argument('-first',type=str,nargs=1,default=[''])
+    parser.add_argument('-second',type=str,nargs=1,default=[''])
     #parser.add_argument('--', '-camparm',type=str,nargs=argparse.REMAINDER,default=[''], dest='camparm', help='Extra parms to pass to fswebcam, raspistill, or wget.  Must come last. ')
     parser.add_argument('-dontwait',action='store_true',help='Capture images immediately.')
     subparsers = parser.add_subparsers(title='subcommands',help='DuetLapse camparms -h  or vidparms -h for more help')
@@ -65,7 +68,7 @@ def init():
     pcamparm.add_argument('--','-parms', type=str,nargs=argparse.REMAINDER,default=[''], dest='vidparms', help='Extra parms to pass to fswebcam, raspistill, or wget.')
     args=vars(parser.parse_args())
 
-    global duet, camera, seconds, detect, pause, movehead, weburl, dontwait, camparms, vidparms
+    global duet, camera, seconds, detect, pause, movehead, weburl, dontwait, camparms, vidparms, two, firstD, secondD
     duet     = args['duet'][0]
     camera   = args['camera'][0]
     seconds  = args['seconds'][0]
@@ -74,6 +77,9 @@ def init():
     movehead = args['movehead']
     weburl   = args['weburl'][0]
     dontwait = args['dontwait']
+    two      = args['two'][0]
+    firstD   = args['first'][0]
+    secondD  = args['second'][0]
     camparms = ['']
     if ('camparms' in args.keys()): camparms = args['camparms']
     camparms = ' '.join(camparms)
@@ -216,25 +222,50 @@ def onePhoto(zl):
       anotationUSB = ''
       anotationRPI = ''
 
-    fn = ' /tmp/DuetLapse/IMG'+s+'.jpeg'
-
-    if ('usb' in camera): 
-        if (camparms == ''):
-            cmd = 'fswebcam --quiet --no-banner ' + anotationUSB + fn
-        else:
-            cmd = 'fswebcam '+camparms+' ' + anotationUSB + fn
-    if ('pi' in camera): 
-        if (camparms == ''):
-            cmd = 'raspistill -t 1 -ex sports -mm matrix -n -o ' + fn + anotationRPI
-        else:
-            cmd = 'raspistill  '+camparms+' -o ' + fn + anotationRPI
-    if ('web' in camera): 
-        if (camparms == ''):
-            cmd = 'wget --auth-no-challenge -nv -O '+fn+' "'+weburl+'" '
-        else:
-            cmd = 'wget '+camparms+' -O '+fn+' "'+weburl+'" '
-
-    subprocess.call(cmd, shell=True)
+    if ('no' in two):
+      fn = ' /tmp/DuetLapse/IMG'+s+'.jpeg'
+      if ('usb' in camera): 
+          if (camparms == ''):
+              cmd = 'fswebcam --quiet --no-banner ' + anotationUSB + fn
+          else:
+              cmd = 'fswebcam '+camparms+' ' + anotationUSB + fn
+      if ('pi' in camera): 
+          if (camparms == ''):
+              cmd = 'raspistill -t 1 -ex sports -mm matrix -n -o ' + fn + anotationRPI
+          else:
+              cmd = 'raspistill  '+camparms+' -o ' + fn + anotationRPI
+      if ('web' in camera): 
+          if (camparms == ''):
+              cmd = 'wget --auth-no-challenge -nv -O '+fn+' "'+weburl+'" '
+          else:
+             cmd = 'wget '+camparms+' -O '+fn+' "'+weburl+'" '
+             
+      subprocess.call(cmd, shell=True)      
+    else:
+      fna = ' /tmp/DuetLapse/IMGA'+s+'.jpeg'
+      fnb = ' /tmp/DuetLapse/IMGB'+s+'.jpeg'
+      if ('usb' in camera): 
+          if (camparms == ''):
+              cmd = 'fswebcam --quiet --no-banner -d ' + firstD  + ' ' + anotationUSB + fna
+              subprocess.call(cmd, shell=True)
+              cmd = 'fswebcam --quiet --no-banner -d ' + secondD + ' ' + anotationUSB + fnb
+              subprocess.call(cmd, shell=True)
+          else:
+              cmd = 'fswebcam '+camparms+' -d ' + firstD  + ' ' + anotationUSB + fna
+              subprocess.call(cmd, shell=True)
+              cmd = 'fswebcam '+camparms+' -d ' + secondD + ' ' + anotationUSB + fnb
+              subprocess.call(cmd, shell=True)
+              
+              
+      if ('pi' in camera): 
+        print('TWO mode supported only for fswebcam');
+      if ('web' in camera): 
+        print('TWO mode supported only for fswebcam');
+    
+    
+    
+    
+    
     global timePriorPhoto
     timePriorPhoto = time.time()
 
@@ -273,14 +304,39 @@ def postProcess():
     print()
     print("Now making {0:d} frames into a video at 10 frames per second.".format(int(np.around(frame))))
     if (250 < frame): print("This can take a while...")
-    fn ='~/DuetLapse'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'
-    if (vidparms == ''):
-        cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMG%08d.jpeg -vcodec libx264 -y -v 8 '+fn
+    if (two == 'yes'):
+      fn  ='~/DuetLapse'+time.strftime('%m%d%y%H%M',time.localtime())+'.mkv'    
+      fna ='~/DuetLapseA'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
+      fnb ='~/DuetLapseB'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
+      if (vidparms == ''):
+          cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMGA%08d.jpeg -vcodec libx264 -y -v 8 '+fna
+          subprocess.call(cmd, shell=True)
+          cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMGB%08d.jpeg -vcodec libx264 -y -v 8 '+fnb
+          subprocess.call(cmd, shell=True)
+          cmd  = 'ffmpeg -i ' + fna + ' -i ' + fnb + ' -c copy -map 0 -map 1 '+fn
+          subprocess.call(cmd, shell=True)
+      else:
+          cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMGA%08d.jpeg '+fna
+          subprocess.call(cmd, shell=True)
+          cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMGB%08d.jpeg '+fnb
+          subprocess.call(cmd, shell=True)
+          cmd  = 'ffmpeg -i ' + fna + ' -i ' + fnb + ' -c copy -map 0 -map 1 '+fn
+          subprocess.call(cmd, shell=True)
+      
+      print('Video processing complete.')
+      print('Video file is in home directory, named '+fn)
+    
     else:
-        cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMG%08d.jpeg '+fn
-    subprocess.call(cmd, shell=True)
-    print('Video processing complete.')
-    print('Video file is in home directory, named '+fn)
+      fn ='~/DuetLapse'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
+      if (vidparms == ''):
+          cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMG%08d.jpeg -vcodec libx264 -y -v 8 '+fn
+      else:
+          cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMG%08d.jpeg '+fn
+      subprocess.call(cmd, shell=True)
+      print('Video processing complete.')
+      print('Video file is in home directory, named '+fn)
+      
+      
     exit()    
 
 
