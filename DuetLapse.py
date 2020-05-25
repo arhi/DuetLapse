@@ -222,7 +222,30 @@ def onePhoto(zl):
       anotationUSB = ''
       anotationRPI = ''
 
-    if ('no' in two):
+    if (two == 'yes'):
+      fna = ' /tmp/DuetLapse/IMGA'+s+'.jpeg'
+      fnb = ' /tmp/DuetLapse/IMGB'+s+'.jpeg'
+      fnc = ' /tmp/DuetLapse/IMGC'+s+'.jpeg'
+      if ('usb' in camera): 
+          if (camparms == ''):
+              cmd = 'fswebcam --quiet --no-banner -d ' + firstD  + ' ' + anotationUSB + fna
+              subprocess.call(cmd, shell=True)
+              cmd = 'fswebcam --quiet --no-banner -d ' + secondD + ' ' + anotationUSB + fnb
+              subprocess.call(cmd, shell=True)
+          else:
+              cmd = 'fswebcam '+camparms+' -d ' + firstD  + ' ' + anotationUSB + fna
+              subprocess.call(cmd, shell=True)
+              cmd = 'fswebcam '+camparms+' -d ' + secondD + ' ' + anotationUSB + fnb
+              subprocess.call(cmd, shell=True)
+              
+          cmd = 'gm montage -geometry 1280x960 '+ fna + ' ' + fnb + ' ' + fnc
+          subprocess.call(cmd, shell=True)
+          
+      if ('pi' in camera): 
+        print('TWO mode supported only for fswebcam');
+      if ('web' in camera): 
+        print('TWO mode supported only for fswebcam');
+    else:
       fn = ' /tmp/DuetLapse/IMG'+s+'.jpeg'
       if ('usb' in camera): 
           if (camparms == ''):
@@ -241,26 +264,6 @@ def onePhoto(zl):
              cmd = 'wget '+camparms+' -O '+fn+' "'+weburl+'" '
              
       subprocess.call(cmd, shell=True)      
-    else:
-      fna = ' /tmp/DuetLapse/IMGA'+s+'.jpeg'
-      fnb = ' /tmp/DuetLapse/IMGB'+s+'.jpeg'
-      if ('usb' in camera): 
-          if (camparms == ''):
-              cmd = 'fswebcam --quiet --no-banner -d ' + firstD  + ' ' + anotationUSB + fna
-              subprocess.call(cmd, shell=True)
-              cmd = 'fswebcam --quiet --no-banner -d ' + secondD + ' ' + anotationUSB + fnb
-              subprocess.call(cmd, shell=True)
-          else:
-              cmd = 'fswebcam '+camparms+' -d ' + firstD  + ' ' + anotationUSB + fna
-              subprocess.call(cmd, shell=True)
-              cmd = 'fswebcam '+camparms+' -d ' + secondD + ' ' + anotationUSB + fnb
-              subprocess.call(cmd, shell=True)
-              
-              
-      if ('pi' in camera): 
-        print('TWO mode supported only for fswebcam');
-      if ('web' in camera): 
-        print('TWO mode supported only for fswebcam');
     
     
     
@@ -308,10 +311,13 @@ def postProcess():
       fn  ='~/DuetLapseDUAL'+time.strftime('%m%d%y%H%M',time.localtime())+'.mkv'    
       fna ='~/DuetLapseA'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
       fnb ='~/DuetLapseB'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
+      fnc ='~/DuetLapseWIDE'+time.strftime('%m%d%y%H%M',time.localtime())+'.mp4'    
       if (vidparms == ''):
           cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMGA%08d.jpeg -vcodec libx264 -y -v 8 '+fna
           subprocess.call(cmd, shell=True)
           cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMGB%08d.jpeg -vcodec libx264 -y -v 8 '+fnb
+          subprocess.call(cmd, shell=True)
+          cmd  = 'ffmpeg -r 10 -i /tmp/DuetLapse/IMGC%08d.jpeg -vcodec libx264 -y -v 8 '+fnc
           subprocess.call(cmd, shell=True)
           cmd  = 'ffmpeg -i ' + fna + ' -i ' + fnb + ' -c copy -map 0 -map 1 '+fn
           subprocess.call(cmd, shell=True)
@@ -319,6 +325,8 @@ def postProcess():
           cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMGA%08d.jpeg '+fna
           subprocess.call(cmd, shell=True)
           cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMGB%08d.jpeg '+fnb
+          subprocess.call(cmd, shell=True)
+          cmd  = 'ffmpeg '+vidparms+' -i /tmp/DuetLapse/IMGC%08d.jpeg '+fnc
           subprocess.call(cmd, shell=True)
           cmd  = 'ffmpeg -i ' + fna + ' -i ' + fnb + ' -c copy -map 0 -map 1 '+fn
           subprocess.call(cmd, shell=True)
