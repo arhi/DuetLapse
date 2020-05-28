@@ -1,6 +1,13 @@
 # DuetLapse
 Time Lapse camera support for Duet based 3D printers.
 
+# FORK CHAGES
+- adapted so it can capture 2 images in the same time from two different cameras
+example: https://youtu.be/aDZHhJkSI6E
+
+# ORIGINAL folllows
+
+
 Designed to run on a Raspberry Pi, may be adaptable to other platforms. Supports cameras via USB, Pi (ribbon cable), and Webcam.  May support DSLR triggering in the future. Produces a video with H.264 encoding in an MP4 container. Does not, at this time, manage a library of videos, it simply drops the vid in home directory. 
 
 Triggers images based on time, layer change, or pause.  Works with existing pauses in G-Code, or can force pauses at other trigger events. Optionally moves head to a specified position before capturing paused images. 
